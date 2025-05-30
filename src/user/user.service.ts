@@ -55,7 +55,7 @@ export class UserService {
 		return restFields;
 	}
 
-	updatePassword(dto: UpdatePasswordDto, userId: string): void {
+	updatePassword(dto: UpdatePasswordDto, userId: string): UserResponse {
 		if (!validateUUID(userId)) {
 			throw new BadRequestException('User Id is invalid', {
 				cause: new Error(),
@@ -80,6 +80,10 @@ export class UserService {
 		existingUser.password = dto.newPassword;
 		existingUser.updatedAt = Date.now();
 		existingUser.version++;
+
+		const {password, ...restFields} = existingUser;
+
+		return restFields;
 	}
 	
 	delete(userId: string): void {
