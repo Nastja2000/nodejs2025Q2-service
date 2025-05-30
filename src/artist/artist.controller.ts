@@ -8,17 +8,17 @@ export class ArtistController {
 	constructor(private readonly artistService: ArtistService) {};
 
 	@Get()
-	getAllUsers() {
+	getAllArtists() {
 		return this.artistService.getAll();
 	}
 
 	@Get(':id')
-	getUserById(@Param('id') id: string) {
-		return this.artistService.getArtistById(id);
+	getArtistById(@Param('id') id: string) {
+		return this.artistService.getById(id);
 	}
   
 	@Post()
-	createUser(@Body() createArtistDto: CreateArtistDto) {
+	createArtist(@Body() createArtistDto: CreateArtistDto) {
 		return this.artistService.create(createArtistDto);
 	}
 
@@ -29,7 +29,7 @@ export class ArtistController {
 
 	@Delete(':id')
 	@HttpCode(204)
-	deleteUser(@Param('id') id: string) {
+	deleteArtist(@Param('id') id: string) {
 		this.artistService.delete(id);
 	}
 };

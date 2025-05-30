@@ -9,10 +9,10 @@ export class ArtistService {
 	private artists: Artist[] = [];
 	
 	getAll(): Artist[] {
-		return this.artists.map((artist) => artist);
+		return this.artists;
 	}
 
-	getArtistById(artistId: string): Artist {
+	getById(artistId: string): Artist {
 		if (!validateUUID(artistId)) {
 			throw new BadRequestException('Artist Id is invalid', {
 				cause: new Error(),
@@ -49,7 +49,7 @@ export class ArtistService {
 		return newArtist;
 	}
 
-	updateArtistInfo(artistId: string, dto: UpdateArtistInfoDto): void {
+	updateArtistInfo(artistId: string, dto: UpdateArtistInfoDto): Artist {
 		if (!validateUUID(artistId)) {
 			throw new BadRequestException('Artist Id is invalid', {
 				cause: new Error(),
@@ -66,8 +66,10 @@ export class ArtistService {
 			});
 		}
 
-		existingArtist.name = dto.newName;
-		existingArtist.grammy = dto.newGrammyInfo;
+		existingArtist.name = dto.name;
+		existingArtist.grammy = dto.grammy;
+
+		return existingArtist;
 	}
 
 	delete(artistId: string): void {

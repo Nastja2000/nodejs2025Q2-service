@@ -2,7 +2,7 @@ import { IsBoolean, IsString } from "class-validator";
 
 export class UpdateArtistInfoDto {
 	@IsString()
-	newName: string;
+	name: string;
 	@IsBoolean()
-	newGrammyInfo: boolean;
+	grammy: boolean;
 };
