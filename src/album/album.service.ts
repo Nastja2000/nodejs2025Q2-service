@@ -1,4 +1,5 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
+/* eslint-disable prettier/prettier */
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { Album } from "./entities/album.entity";
 import { v4 as generateUUID, validate as validateUUID } from "uuid";
 import { CreateAlbumDto } from "./dto/create-album.dto";
@@ -6,7 +7,7 @@ import { UpdateAlbumDto } from "./dto/update-album-info.dto";
 
 @Injectable()
 export class AlbumService {
-	private albums: Album[] = [];
+	public albums: Album[] = [];
 	
 	getAll(): Album[] {
 		return this.albums;
@@ -59,6 +60,7 @@ export class AlbumService {
 		}
 
 		const existingAlbum: Album = this.albums.find((album) => album.id === albumId);
+
 		if (!existingAlbum){
 			throw new NotFoundException("Album with this Id isn't exist", {
 				cause: new Error(),

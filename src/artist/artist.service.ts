@@ -6,7 +6,7 @@ import { UpdateArtistInfoDto } from "./dto/update-artist-info.dto";
 
 @Injectable()
 export class ArtistService {
-	private artists: Artist[] = [];
+	public artists: Artist[] = [];
 	
 	getAll(): Artist[] {
 		return this.artists;

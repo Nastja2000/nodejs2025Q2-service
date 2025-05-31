@@ -1,4 +1,5 @@
-import { BadRequestException, NotFoundException, ForbiddenException, Injectable } from "@nestjs/common";
+/* eslint-disable prettier/prettier */
+import { BadRequestException, NotFoundException, Injectable } from "@nestjs/common";
 import { Track } from "./entities/track.entity";
 import { v4 as generateUUID, validate as validateUUID } from "uuid";
 import { CreateTrackDto } from "./dto/create-track.dto";
@@ -6,7 +7,7 @@ import { UpdateTrackDto } from "./dto/update-track-info.dto";
 
 @Injectable()
 export class TrackService {
-	private tracks: Track[] = [];
+	public tracks: Track[] = [];
 
 	getAll(): Track[] {
 		return this.tracks;
@@ -31,7 +32,7 @@ export class TrackService {
 	}
 
 	create(dto: CreateTrackDto): Track {
-		if (!dto.name || !dto.duration || !dto.artistId || !dto.albumId) {
+		if (!dto.name || !dto.duration) {
 			throw new BadRequestException('Required fields are not entered', {
 				cause: new Error(),
 				description: "Required field(s) is(are) missing. Check if all data is entered and try again",
@@ -51,7 +52,7 @@ export class TrackService {
 		return newTrack;
 	}
 
-	updatePassword(trackId: string, dto: UpdateTrackDto): Track {
+	updateTrack(trackId: string, dto: UpdateTrackDto): Track {
 		if (!validateUUID(trackId)) {
 			throw new BadRequestException('Track Id is invalid', {
 				cause: new Error(),

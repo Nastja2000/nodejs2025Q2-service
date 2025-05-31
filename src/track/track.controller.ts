@@ -23,8 +23,8 @@ export class TrackController {
 	}
 
 	@Put(':id')
-	updatePassword(@Param('id') id: string, @Body() UpdateTrackDto: UpdateTrackDto) {
-		this.trackService.updatePassword(id, UpdateTrackDto);
+	updateTrack(@Param('id') id: string, @Body() UpdateTrackDto: UpdateTrackDto) {
+		return  this.trackService.updateTrack(id, UpdateTrackDto);
 	}
 
 	@Delete(':id')

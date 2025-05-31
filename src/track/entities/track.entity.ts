@@ -1,3 +1,4 @@
+/* eslint-disable prettier/prettier */
 export interface Track {
   id: string; // uuid v4
   name: string;
