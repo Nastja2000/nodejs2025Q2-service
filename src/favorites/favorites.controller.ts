@@ -37,7 +37,7 @@ export class FavoritesController {
         this.favoritesService.deleteFavoriteArtist(id);
     }
 
-    @Delete('/artist/:id')
+    @Delete('/album/:id')
     @HttpCode(204)
     deleteAlbumFromFavorites(@Param('id') id: string) {
         this.favoritesService.deleteFavoriteAlbum(id);

@@ -1,14 +1,14 @@
-/* eslint-disable prettier/prettier */
-
 import { Module } from '@nestjs/common';
 import { FavoritesController } from './favorites.controller';
 import { FavoritesService } from './favorites.service';
-import { TrackService } from 'src/track/track.service';
-import { AlbumService } from 'src/album/album.service';
-import { ArtistService } from 'src/artist/artist.service';
+import { ArtistModule } from 'src/artist/artist.module';
+import { AlbumModule } from 'src/album/album.module';
+import { TrackModule } from 'src/track/track.module';
 
 @Module({
+  imports: [ArtistModule, AlbumModule, TrackModule],
   controllers: [FavoritesController],
-  providers: [FavoritesService, TrackService, AlbumService, ArtistService]
+  providers: [FavoritesService],
+  exports: [FavoritesService]
 })
 export class FavoritesModule {}

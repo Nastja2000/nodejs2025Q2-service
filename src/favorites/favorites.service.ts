@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { FavoritesResponse } from "./entities/favorites.entity";
 import { Track } from "src/track/entities/track.entity";
 import { Artist } from "src/artist/entities/artist.entity";
@@ -11,7 +10,11 @@ import { TrackService } from "src/track/track.service";
 
 @Injectable()
 export class FavoritesService {
-    constructor(private readonly trackService: TrackService, private readonly artistService: ArtistService, private readonly albumService: AlbumService) {};
+    constructor(
+        private readonly trackService: TrackService, 
+        private readonly artistService: ArtistService, 
+        private readonly albumService: AlbumService
+    ) {};
     private favorites: FavoritesResponse = {
         tracks: [],
         albums: [],
@@ -30,7 +33,7 @@ export class FavoritesService {
             });
         }
 
-        const existingTrack: Track = this.trackService.getById(trackId);
+        const existingTrack: Track = this.trackService.getById(trackId, true);
 		if (!existingTrack){
             throw new UnprocessableEntityException("Track with this Id doesn't exist", {
                 cause: new Error(),
@@ -40,7 +43,7 @@ export class FavoritesService {
 
         this.favorites.tracks.push(existingTrack);
         
-        return `Track "${existingTrack.name}" is addeed to the favorites`;
+        return `Track "${existingTrack.name}" is added to the favorites`;
     }
 
     addFavoriteArtist(artistId: string): string {
@@ -51,7 +54,7 @@ export class FavoritesService {
             });
         }
 
-        const existingArtist: Artist = this.artistService.getById(artistId);
+        const existingArtist: Artist = this.artistService.getById(artistId, true);
 		if (!existingArtist){
             throw new UnprocessableEntityException("Artist with this Id doesn't exist", {
                 cause: new Error(),
@@ -72,7 +75,8 @@ export class FavoritesService {
             });
         }
 
-        const existingAlbum: Album = this.albumService.getById(albumId);
+        const existingAlbum: Album = this.albumService.getById(albumId, true);
+
 		if (!existingAlbum){
             throw new UnprocessableEntityException("Album with this Id doesn't exist", {
                 cause: new Error(),
@@ -106,9 +110,9 @@ export class FavoritesService {
 
     deleteFavoriteArtist(artistId: string): void {
         if (!validateUUID(artistId)) {
-            throw new BadRequestException('Track Id is invalid', {
+            throw new BadRequestException('Artist Id is invalid', {
                 cause: new Error(),
-                description: "The wrong format of the Track's Id. It should be like UUID v4",
+                description: "The wrong format of the Artist's Id. It should be like UUID v4",
             });
         }
 
@@ -125,20 +129,36 @@ export class FavoritesService {
 
     deleteFavoriteAlbum(albumId: string): void {
         if (!validateUUID(albumId)) {
-            throw new BadRequestException('Track Id is invalid', {
+            throw new BadRequestException('Album Id is invalid', {
                 cause: new Error(),
-                description: "The wrong format of the Track's Id. It should be like UUID v4",
+                description: "The wrong format of the Album's Id. It should be like UUID v4",
             });
         }
 
-        const existingInFavoritesAlbumIndex: number = this.albumService.albums.findIndex((album) => album.id === albumId);
-		if (existingInFavoritesAlbumIndex === -1){
-            throw new NotFoundException("Artist with this Id doesn't exist", {
+        const existingInFavoritesArtistIndex: number = this.favorites.albums.findIndex((album) => album.id === albumId);
+		if (existingInFavoritesArtistIndex === -1){
+            throw new NotFoundException("Album with this Id doesn't exist in Favorites", {
                 cause: new Error(),
-                description: "The Artist with this Id doesn't exist and not able to be added to the favorites. Please, check the id that you entered",
+                description: "The Album with this Id doesn't exist in Favorites. Please, check the id that you entered",
             });
         }
 
-        this.favorites.albums.splice(existingInFavoritesAlbumIndex, 1);
+        this.favorites.albums.splice(existingInFavoritesArtistIndex, 1);
+    }
+
+    deleteEntityItemFromFavorites(entity: 'track' | 'artist' | 'album', itemId: string): void {
+        switch (entity) {
+            case 'track':
+                this.deleteFavoriteTrack(itemId);
+                break;
+            case 'artist':
+                this.deleteFavoriteArtist(itemId);
+                break;
+            case 'album':
+                this.deleteFavoriteAlbum(itemId);
+                break;
+            default:
+                break;
+        }
     }
 }

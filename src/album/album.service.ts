@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { Album } from "./entities/album.entity";
 import { v4 as generateUUID, validate as validateUUID } from "uuid";
@@ -7,13 +6,13 @@ import { UpdateAlbumDto } from "./dto/update-album-info.dto";
 
 @Injectable()
 export class AlbumService {
-	public albums: Album[] = [];
+	private albums: Album[] = [];
 	
 	getAll(): Album[] {
 		return this.albums;
 	}
 
-	getById(albumId: string): Album {
+	getById(albumId: string, isFavoritesCheck: boolean = false): Album {
 		if (!validateUUID(albumId)) {
 			throw new BadRequestException('Album Id is invalid', {
 				cause: new Error(),
@@ -21,21 +20,21 @@ export class AlbumService {
 			});
 		}
 		const existingAlbum: Album = this.albums.find((album) => album.id === albumId);
-		if (!existingAlbum){
+		if (!existingAlbum && !isFavoritesCheck){
 			throw new NotFoundException("Album with this Id isn't exist", {
 				cause: new Error(),
 				description: "The Album with this Id isn't exist. Please, check the id that you enter",
 			});
 		}
 
-		return existingAlbum;
+		return existingAlbum ?? null;
 	}
 
 	create(dto: CreateAlbumDto): Album {
-		if (!dto.name || !dto.year) {
+		if (!dto.name || !dto.year || dto.artistId) {
 			throw new BadRequestException('Required fields are not entered', {
 				cause: new Error(),
-				description: "Required field(s) is(are) missing. Check if name, year information are entered and try again",
+				description: "Required field(s) is(are) missing. Check if all necessary information is entered and try again",
 			});
 		}
 
@@ -43,7 +42,7 @@ export class AlbumService {
 			id: generateUUID(),
 			name: dto.name,
 			year: dto.year,
-			artistId: dto.artistId || null
+			artistId: dto.artistId ?? null
 		};
 
 		this.albums.push(newAlbum);
@@ -70,7 +69,7 @@ export class AlbumService {
 
 		existingAlbum.name = dto.name;
 		existingAlbum.year = dto.year;
-		existingAlbum.artistId = dto.artistId !== undefined ? dto.artistId : existingAlbum.artistId;
+		existingAlbum.artistId = dto.artistId ?? null;
 
 		return existingAlbum;
 	}

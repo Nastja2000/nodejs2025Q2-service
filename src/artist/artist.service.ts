@@ -1,4 +1,4 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from "@nestjs/common";
+import { Injectable, BadRequestException, NotFoundException } from "@nestjs/common";
 import { Artist } from "./entities/artist.entity";
 import { v4 as generateUUID, validate as validateUUID } from "uuid";
 import { CreateArtistDto } from "./dto/create-artist.dto";
@@ -6,13 +6,13 @@ import { UpdateArtistInfoDto } from "./dto/update-artist-info.dto";
 
 @Injectable()
 export class ArtistService {
-	public artists: Artist[] = [];
+	private artists: Artist[] = [];
 	
 	getAll(): Artist[] {
 		return this.artists;
 	}
 
-	getById(artistId: string): Artist {
+	getById(artistId: string, isFavoritesCheck: boolean = false): Artist {
 		if (!validateUUID(artistId)) {
 			throw new BadRequestException('Artist Id is invalid', {
 				cause: new Error(),
@@ -20,14 +20,14 @@ export class ArtistService {
 			});
 		}
 		const existingArtist: Artist = this.artists.find((artist) => artist.id === artistId);
-		if (!existingArtist){
+		if (!existingArtist && !isFavoritesCheck){
 			throw new NotFoundException("Artist with this Id isn't exist", {
 				cause: new Error(),
 				description: "The Artist with this Id isn't exist. Please, check the id that you enter",
 			});
-		}
+		} 
 
-		return existingArtist;
+		return existingArtist ?? null;
 	}
 
 	create(dto: CreateArtistDto): Artist {

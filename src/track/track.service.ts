@@ -1,4 +1,3 @@
-/* eslint-disable prettier/prettier */
 import { BadRequestException, NotFoundException, Injectable } from "@nestjs/common";
 import { Track } from "./entities/track.entity";
 import { v4 as generateUUID, validate as validateUUID } from "uuid";
@@ -7,13 +6,13 @@ import { UpdateTrackDto } from "./dto/update-track-info.dto";
 
 @Injectable()
 export class TrackService {
-	public tracks: Track[] = [];
+	private tracks: Track[] = [];
 
 	getAll(): Track[] {
 		return this.tracks;
 	}
 
-	getById(id: string): Track {
+	getById(id: string, isFavoritesCheck: boolean = false): Track {
 		if (!validateUUID(id)) {
 			throw new BadRequestException('Track Id is invalid', {
 				cause: new Error(),
@@ -21,14 +20,14 @@ export class TrackService {
 			});
 		}
 		const existingTrack: Track = this.tracks.find((track) => track.id === id);
-		if (!existingTrack){
+		if (!existingTrack && !isFavoritesCheck){
 			throw new NotFoundException("Track with this Id isn't exist", {
 				cause: new Error(),
 				description: "The Track with this Id isn't exist. Please, check the id that you enter",
 			});
 		}
 
-		return existingTrack;
+		return existingTrack ?? null;
 	}
 
 	create(dto: CreateTrackDto): Track {
@@ -69,8 +68,8 @@ export class TrackService {
 
 		existingTrack.name = dto.name;
 		existingTrack.duration = dto.duration;
-		existingTrack.artistId = dto.artistId !== undefined ? dto.artistId : existingTrack.artistId;
-		existingTrack.albumId = dto.albumId !== undefined ? dto.albumId : existingTrack.albumId;
+		existingTrack.artistId = dto.artistId ?? null;
+		existingTrack.albumId = dto.albumId ?? null;
 
 		return existingTrack;
 	}
