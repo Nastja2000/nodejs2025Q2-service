@@ -1,35 +1,47 @@
-import { Body, Controller, Delete, Get, HttpCode, Param, Post, Put } from "@nestjs/common";
-import { ArtistService } from "./artist.service";
-import { CreateArtistDto } from "./dto/create-artist.dto";
-import { UpdateArtistInfoDto } from "./dto/update-artist-info.dto"; 
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  HttpCode,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
+import { ArtistService } from './artist.service';
+import { CreateArtistDto } from './dto/create-artist.dto';
+import { UpdateArtistInfoDto } from './dto/update-artist-info.dto';
 
 @Controller('artist')
 export class ArtistController {
-	constructor(private readonly artistService: ArtistService) {};
+  constructor(private readonly artistService: ArtistService) {}
 
-	@Get()
-	getAllArtists() {
-		return this.artistService.getAll();
-	}
+  @Get()
+  getAllArtists() {
+    return this.artistService.getAll();
+  }
 
-	@Get(':id')
-	getArtistById(@Param('id') id: string) {
-		return this.artistService.getById(id);
-	}
-  
-	@Post()
-	createArtist(@Body() createArtistDto: CreateArtistDto) {
-		return this.artistService.create(createArtistDto);
-	}
+  @Get(':id')
+  getArtistById(@Param('id') id: string) {
+    return this.artistService.getById(id);
+  }
 
-	@Put(':id')
-	updateArtistInfo(@Param('id') id: string, @Body() UpdateArtistInfoDto: UpdateArtistInfoDto) {
-		return this.artistService.updateArtistInfo(id, UpdateArtistInfoDto);
-	}
+  @Post()
+  createArtist(@Body() createArtistDto: CreateArtistDto) {
+    return this.artistService.create(createArtistDto);
+  }
 
-	@Delete(':id')
-	@HttpCode(204)
-	deleteArtist(@Param('id') id: string) {
-		this.artistService.delete(id);
-	}
-};
+  @Put(':id')
+  updateArtistInfo(
+    @Param('id') id: string,
+    @Body() UpdateArtistInfoDto: UpdateArtistInfoDto,
+  ) {
+    return this.artistService.updateArtistInfo(id, UpdateArtistInfoDto);
+  }
+
+  @Delete(':id')
+  @HttpCode(204)
+  deleteArtist(@Param('id') id: string) {
+    this.artistService.delete(id);
+  }
+}

@@ -5,7 +5,7 @@ export interface User {
   version: number; // integer number, increments on update
   createdAt: number; // timestamp of creation
   updatedAt: number; // timestamp of last update
-};
+}
 
 export interface UserResponse {
   id: string; // uuid v4
@@ -13,4 +13,4 @@ export interface UserResponse {
   version: number; // integer number, increments on update
   createdAt: number; // timestamp of creation
   updatedAt: number; // timestamp of last update
-};
+}
