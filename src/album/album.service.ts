@@ -2,14 +2,30 @@ import {
   Injectable,
   BadRequestException,
   NotFoundException,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { Album } from './entities/album.entity';
 import { v4 as generateUUID, validate as validateUUID } from 'uuid';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album-info.dto';
+import { TrackService } from 'src/track/track.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
+import { ArtistService } from 'src/artist/artist.service';
 
 @Injectable()
 export class AlbumService {
+  constructor(
+    @Inject(forwardRef(() => ArtistService))
+    private readonly albumService: AlbumService,
+
+    @Inject(forwardRef(() => TrackService))
+    private readonly trackService: TrackService,
+
+    @Inject(forwardRef(() => FavoritesService))
+    private readonly favoritesService: FavoritesService
+  ) {}
+
   private albums: Album[] = [];
 
   getAll(): Album[] {
@@ -107,5 +123,16 @@ export class AlbumService {
     }
 
     this.albums.splice(existingUserIndex, 1);
+
+    this.favoritesService.deleteEntityItemFromFavorites('album', albumId);
+    this.trackService.deleteArtistReference(albumId);
+  }
+
+  deleteArtistReference(artistId: string): void {
+    this.albums.forEach((album) => {
+      if (album.artistId === artistId) {
+        album.artistId = null;
+      }
+    });
   }
 }

@@ -2,14 +2,30 @@ import {
   BadRequestException,
   NotFoundException,
   Injectable,
+  Inject,
+  forwardRef,
 } from '@nestjs/common';
 import { Track } from './entities/track.entity';
 import { v4 as generateUUID, validate as validateUUID } from 'uuid';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track-info.dto';
+import { ArtistService } from 'src/artist/artist.service';
+import { AlbumService } from 'src/album/album.service';
+import { FavoritesService } from 'src/favorites/favorites.service';
 
 @Injectable()
 export class TrackService {
+  constructor(
+    @Inject(forwardRef(() => ArtistService))
+    private readonly albumService: AlbumService,
+
+    @Inject(forwardRef(() => AlbumService))
+    private readonly trackService: TrackService,
+
+    @Inject(forwardRef(() => FavoritesService))
+    private readonly favoritesService: FavoritesService
+  ) {}
+
   private tracks: Track[] = [];
 
   getAll(): Track[] {
@@ -105,5 +121,23 @@ export class TrackService {
     }
 
     this.tracks.splice(existingTrackIndex, 1);
+
+    this.favoritesService.deleteEntityItemFromFavorites('track', trackId);
+  }
+
+  deleteArtistReference(artistId: string): void {
+    this.tracks.forEach((track) => {
+      if (track.artistId === artistId) {
+        track.artistId = null;
+      }
+    });
+  }
+
+  deleteAlbumReference(albumId: string): void {
+    this.tracks.forEach((track) => {
+      if (track.albumId === albumId) {
+        track.albumId = null;
+      }
+    });
   }
 }
