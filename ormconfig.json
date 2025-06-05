@@ -1,0 +1,16 @@
+{
+	"type": "postgres",
+	"host": "postgres",
+	"port": 5432,
+	"username": "postgres",
+	"password": "postgres",
+	"database": "home_library",
+	"synchronize": false,
+	"logging": true,
+	"entities": ["src/user/entities/user.entity.ts", "src/track/entities/track.entity.ts", "src/favorites/entities/favorites.entity.ts", "src/artist/entities/artist.entity.ts", "src/album/entities/album.entity.ts"],
+	"migrations": ["src/migrations/*.ts"],
+	"cli": {
+		"entitiesDir": "src",
+		"migrationsDir": "src/migrations"
+	}
+}
