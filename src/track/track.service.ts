@@ -6,33 +6,36 @@ import {
   forwardRef,
 } from '@nestjs/common';
 import { Track } from './entities/track.entity';
-import { v4 as generateUUID, validate as validateUUID } from 'uuid';
+import { validate as validateUUID } from 'uuid';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track-info.dto';
 import { ArtistService } from 'src/artist/artist.service';
 import { AlbumService } from 'src/album/album.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class TrackService {
   constructor(
+    @InjectRepository(Track)
+    private trackRepo: Repository<Track>,
+
     @Inject(forwardRef(() => ArtistService))
-    private readonly albumService: AlbumService,
+    private readonly artistService: ArtistService,
 
     @Inject(forwardRef(() => AlbumService))
-    private readonly trackService: TrackService,
+    private readonly albumService: AlbumService,
 
     @Inject(forwardRef(() => FavoritesService))
     private readonly favoritesService: FavoritesService
   ) {}
 
-  private tracks: Track[] = [];
-
-  getAll(): Track[] {
-    return this.tracks;
+  async getAll(): Promise<Track[]> {
+    return this.trackRepo.find();
   }
 
-  getById(id: string, isFavoritesCheck: boolean = false): Track {
+  async getById(id: string, isFavoritesCheck: boolean = false): Promise<Track> {
     if (!validateUUID(id)) {
       throw new BadRequestException('Track Id is invalid', {
         cause: new Error(),
@@ -40,7 +43,8 @@ export class TrackService {
           "The wrong format of the Track's Id. It should be like UUID v4",
       });
     }
-    const existingTrack: Track = this.tracks.find((track) => track.id === id);
+    const existingTrack: Track = await this.trackRepo.findOne({where: {id}});
+
     if (!existingTrack && !isFavoritesCheck) {
       throw new NotFoundException("Track with this Id isn't exist", {
         cause: new Error(),
@@ -52,7 +56,7 @@ export class TrackService {
     return existingTrack ?? null;
   }
 
-  create(dto: CreateTrackDto): Track {
+  async create(dto: CreateTrackDto): Promise<Track> {
     if (!dto.name || !dto.duration) {
       throw new BadRequestException('Required fields are not entered', {
         cause: new Error(),
@@ -61,30 +65,25 @@ export class TrackService {
       });
     }
 
-    const newTrack: Track = {
-      id: generateUUID(),
-      name: dto.name,
-      duration: dto.duration,
+    const newTrack: Track = this.trackRepo.create({
+      ...dto,
       artistId: dto.artistId || null,
-      albumId: dto.albumId || null,
-    };
+      albumId: dto.albumId || null
+    });
 
-    this.tracks.push(newTrack);
-
-    return newTrack;
+    return this.trackRepo.save(newTrack);
   }
 
-  updateTrack(trackId: string, dto: UpdateTrackDto): Track {
-    if (!validateUUID(trackId)) {
+  async updateTrack(id: string, dto: UpdateTrackDto): Promise<Track> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Track Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Track's Id. It should be like UUID v4",
       });
     }
-    const existingTrack: Track = this.tracks.find(
-      (track) => track.id === trackId,
-    );
+    const existingTrack: Track = await this.trackRepo.findOne({where: {id}});
+
     if (!existingTrack) {
       throw new NotFoundException("Track with this Id isn't exist", {
         cause: new Error(),
@@ -93,26 +92,31 @@ export class TrackService {
       });
     }
 
-    existingTrack.name = dto.name;
-    existingTrack.duration = dto.duration;
-    existingTrack.artistId = dto.artistId ?? null;
-    existingTrack.albumId = dto.albumId ?? null;
+    if(dto.albumId) {
+      await this.albumService.getById(dto.albumId);
+    }
 
-    return existingTrack;
+    if(dto.artistId) {
+      await this.artistService.getById(dto.artistId);
+    }
+
+    Object.assign(existingTrack, dto);
+
+    return this.trackRepo.save(existingTrack);
   }
 
-  delete(trackId: string): void {
-    if (!validateUUID(trackId)) {
+  async delete(id: string): Promise<void> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Track Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Track's Id. It should be like UUID v4",
       });
     }
-    const existingTrackIndex: number = this.tracks.findIndex(
-      (track) => track.id === trackId,
-    );
-    if (existingTrackIndex === -1) {
+
+    const deletionResult = await this.trackRepo.delete(id);
+   
+    if (deletionResult.affected === 0) {
       throw new NotFoundException("Track with this Id isn't exist", {
         cause: new Error(),
         description:
@@ -120,24 +124,14 @@ export class TrackService {
       });
     }
 
-    this.tracks.splice(existingTrackIndex, 1);
-
-    this.favoritesService.deleteEntityItemFromFavorites('track', trackId);
+    this.favoritesService.deleteEntityItemFromFavorites('track', id);
   }
 
-  deleteArtistReference(artistId: string): void {
-    this.tracks.forEach((track) => {
-      if (track.artistId === artistId) {
-        track.artistId = null;
-      }
-    });
+  async deleteArtistReference(artistId: string): Promise<void> {
+    await this.trackRepo.update({ artistId }, { artistId: null});
   }
 
-  deleteAlbumReference(albumId: string): void {
-    this.tracks.forEach((track) => {
-      if (track.albumId === albumId) {
-        track.albumId = null;
-      }
-    });
+  async deleteAlbumReference(albumId: string): Promise<void> {
+    await this.trackRepo.update({ albumId }, { albumId: null});
   }
 }

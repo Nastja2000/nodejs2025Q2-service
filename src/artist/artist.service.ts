@@ -12,10 +12,15 @@ import { UpdateArtistInfoDto } from './dto/update-artist-info.dto';
 import { AlbumService } from 'src/album/album.service';
 import { TrackService } from 'src/track/track.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class ArtistService {
   constructor(
+    @InjectRepository(Artist)
+    private artistRepo: Repository<Artist>,
+
     @Inject(forwardRef(() => AlbumService))
     private readonly albumService: AlbumService,
 
@@ -26,23 +31,21 @@ export class ArtistService {
     private readonly favoritesService: FavoritesService
   ) {}
 
-  private artists: Artist[] = [];
-
-  getAll(): Artist[] {
-    return this.artists;
+  async getAll(): Promise<Artist[]> {
+    return this.artistRepo.find();
   }
 
-  getById(artistId: string, isFavoritesCheck: boolean = false): Artist {
-    if (!validateUUID(artistId)) {
+  async getById(id: string, isFavoritesCheck: boolean = false): Promise<Artist> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Artist Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Artist's Id. It should be like UUID v4",
       });
     }
-    const existingArtist: Artist = this.artists.find(
-      (artist) => artist.id === artistId,
-    );
+
+    const existingArtist: Artist = await this.artistRepo.findOne({where: {id}});
+
     if (!existingArtist && !isFavoritesCheck) {
       throw new NotFoundException("Artist with this Id isn't exist", {
         cause: new Error(),
@@ -54,7 +57,8 @@ export class ArtistService {
     return existingArtist ?? null;
   }
 
-  create(dto: CreateArtistDto): Artist {
+  async create(dto: CreateArtistDto): Promise<Artist> {
+
     if (!dto.name || !dto.grammy) {
       throw new BadRequestException('Required fields are not entered', {
         cause: new Error(),
@@ -63,19 +67,15 @@ export class ArtistService {
       });
     }
 
-    const newArtist: Artist = {
-      id: generateUUID(),
-      name: dto.name,
-      grammy: dto.grammy,
-    };
+    const newArtist: Artist = this.artistRepo.create({
+      ...dto
+    });
 
-    this.artists.push(newArtist);
-
-    return newArtist;
+    return this.artistRepo.save(newArtist);
   }
 
-  updateArtistInfo(artistId: string, dto: UpdateArtistInfoDto): Artist {
-    if (!validateUUID(artistId)) {
+  async updateArtistInfo(id: string, dto: UpdateArtistInfoDto): Promise<Artist> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Artist Id is invalid', {
         cause: new Error(),
         description:
@@ -83,9 +83,7 @@ export class ArtistService {
       });
     }
 
-    const existingArtist: Artist = this.artists.find(
-      (artist) => artist.id === artistId,
-    );
+    const existingArtist: Artist = await this.artistRepo.findOne({where: {id}});
 
     if (!existingArtist) {
       throw new NotFoundException("Artist with this Id isn't exist", {
@@ -95,24 +93,23 @@ export class ArtistService {
       });
     }
 
-    existingArtist.name = dto.name;
-    existingArtist.grammy = dto.grammy;
+    Object.assign(existingArtist, dto);
 
-    return existingArtist;
+    return this.artistRepo.save(existingArtist);
   }
 
-  delete(artistId: string): void {
-    if (!validateUUID(artistId)) {
+  async delete(id: string): Promise<void> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Artist Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Artist's Id. It should be like UUID v4",
       });
     }
-    const existingUserIndex: number = this.artists.findIndex(
-      (artist) => artist.id === artistId,
-    );
-    if (existingUserIndex === -1) {
+
+    const deletionResult = await this.artistRepo.delete(id);
+
+    if (deletionResult.affected === 0) {
       throw new NotFoundException("Artist with this Id isn't exist", {
         cause: new Error(),
         description:
@@ -120,10 +117,8 @@ export class ArtistService {
       });
     }
 
-    this.artists.splice(existingUserIndex, 1);
-
-    this.favoritesService.deleteEntityItemFromFavorites('artist', artistId);
-    this.albumService.deleteArtistReference(artistId);
-    this.trackService.deleteArtistReference(artistId);
+    this.favoritesService.deleteEntityItemFromFavorites('artist', id);
+    this.albumService.deleteArtistReference(id);
+    this.trackService.deleteArtistReference(id);
   }
 }

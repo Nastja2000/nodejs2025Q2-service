@@ -1,9 +1,26 @@
 import { Artist } from 'src/artist/entities/artist.entity';
 import { Album } from 'src/album/entities/album.entity';
 import { Track } from 'src/track/entities/track.entity';
+import { Entity, JoinTable, ManyToMany } from 'typeorm';
 
-export interface FavoritesResponse {
+export interface IFavoritesResponse {
   artists: Artist[];
   albums: Album[];
+  tracks: Track[];
+}
+
+@Entity()
+export class Favorites {
+
+  @ManyToMany(() => Artist)
+  @JoinTable()
+  artists: Artist[];
+
+  @ManyToMany(() => Album)
+  @JoinTable()
+  albums: Album[];
+
+  @ManyToMany(() => Track)
+  @JoinTable()
   tracks: Track[];
 }

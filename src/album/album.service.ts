@@ -12,12 +12,17 @@ import { UpdateAlbumDto } from './dto/update-album-info.dto';
 import { TrackService } from 'src/track/track.service';
 import { FavoritesService } from 'src/favorites/favorites.service';
 import { ArtistService } from 'src/artist/artist.service';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
 
 @Injectable()
 export class AlbumService {
   constructor(
+    @InjectRepository(Album)
+    private albumRepo: Repository<Album>,
+
     @Inject(forwardRef(() => ArtistService))
-    private readonly albumService: AlbumService,
+    private readonly artistService: ArtistService,
 
     @Inject(forwardRef(() => TrackService))
     private readonly trackService: TrackService,
@@ -28,21 +33,19 @@ export class AlbumService {
 
   private albums: Album[] = [];
 
-  getAll(): Album[] {
-    return this.albums;
+  async getAll(): Promise<Album[]> {
+    return this.albumRepo.find();
   }
 
-  getById(albumId: string, isFavoritesCheck: boolean = false): Album {
-    if (!validateUUID(albumId)) {
+  async getById(id: string, isFavoritesCheck: boolean = false): Promise<Album> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Album Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Album's Id. It should be like UUID v4",
       });
     }
-    const existingAlbum: Album = this.albums.find(
-      (album) => album.id === albumId,
-    );
+    const existingAlbum: Album = await this.albumRepo.findOne({where: {id}});
     if (!existingAlbum && !isFavoritesCheck) {
       throw new NotFoundException("Album with this Id isn't exist", {
         cause: new Error(),
@@ -54,7 +57,7 @@ export class AlbumService {
     return existingAlbum ?? null;
   }
 
-  create(dto: CreateAlbumDto): Album {
+  async create(dto: CreateAlbumDto): Promise<Album> {
     if (!dto.name || !dto.year || dto.artistId) {
       throw new BadRequestException('Required fields are not entered', {
         cause: new Error(),
@@ -63,20 +66,16 @@ export class AlbumService {
       });
     }
 
-    const newAlbum: Album = {
-      id: generateUUID(),
-      name: dto.name,
-      year: dto.year,
-      artistId: dto.artistId ?? null,
-    };
+    const newAlbum: Album = this.albumRepo.create({
+      ...dto,
+      artistId: dto.artistId ?? null
+    });
 
-    this.albums.push(newAlbum);
-
-    return newAlbum;
+    return this.albumRepo.save(newAlbum);
   }
 
-  updateAlbumInfo(albumId: string, dto: UpdateAlbumDto): Album {
-    if (!validateUUID(albumId)) {
+  async updateAlbumInfo(id: string, dto: UpdateAlbumDto): Promise<Album> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Album Id is invalid', {
         cause: new Error(),
         description:
@@ -84,9 +83,7 @@ export class AlbumService {
       });
     }
 
-    const existingAlbum: Album = this.albums.find(
-      (album) => album.id === albumId,
-    );
+    const existingAlbum: Album = await this.albumRepo.findOne({where: {id}});
 
     if (!existingAlbum) {
       throw new NotFoundException("Album with this Id isn't exist", {
@@ -96,25 +93,27 @@ export class AlbumService {
       });
     }
 
-    existingAlbum.name = dto.name;
-    existingAlbum.year = dto.year;
-    existingAlbum.artistId = dto.artistId ?? null;
+    if(dto.artistId) {
+      await this.artistService.getById(dto.artistId);
+    }
 
-    return existingAlbum;
+    Object.assign(existingAlbum, dto);
+
+    return this.albumRepo.save(existingAlbum);
   }
 
-  delete(albumId: string): void {
-    if (!validateUUID(albumId)) {
+  async delete(id: string): Promise<void> {
+    if (!validateUUID(id)) {
       throw new BadRequestException('Album Id is invalid', {
         cause: new Error(),
         description:
           "The wrong format of the Album's Id. It should be like UUID v4",
       });
     }
-    const existingUserIndex: number = this.albums.findIndex(
-      (album) => album.id === albumId,
-    );
-    if (existingUserIndex === -1) {
+
+    const deletionResult = await this.albumRepo.delete(id);
+
+    if (deletionResult.affected === 0) {
       throw new NotFoundException("Album with this Id isn't exist", {
         cause: new Error(),
         description:
@@ -122,17 +121,11 @@ export class AlbumService {
       });
     }
 
-    this.albums.splice(existingUserIndex, 1);
-
-    this.favoritesService.deleteEntityItemFromFavorites('album', albumId);
-    this.trackService.deleteArtistReference(albumId);
+    this.favoritesService.deleteEntityItemFromFavorites('album', id);
+    this.trackService.deleteArtistReference(id);
   }
 
-  deleteArtistReference(artistId: string): void {
-    this.albums.forEach((album) => {
-      if (album.artistId === artistId) {
-        album.artistId = null;
-      }
-    });
+  async deleteArtistReference(artistId: string): Promise<void> {
+    await this.albumRepo.update({ artistId }, { artistId: null});
   }
 }
