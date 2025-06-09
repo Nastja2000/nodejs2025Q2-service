@@ -24,11 +24,11 @@ import  { Favorites } from './favorites/entities/favorites.entity'
       imports: [ConfigModule],
       useFactory: (configService: ConfigService) => ({
         type: 'postgres',
-        host: configService.get('DB_HOST'),
-        port: +configService.get('DB_PORT'),
-        password: configService.get('DB_PASSWORD'),
-        username: configService.get('DB_USERNAME'),
-        database: configService.get('DB_DATABASE'),
+        host: configService.get('POSTGRES_HOST'),
+        port: +configService.get('POSTGRES_PORT'),
+        password: configService.get('POSTGRES_PASSWORD'),
+        username: configService.get('POSTGRES_USER'),
+        database: configService.get('POSTGRES_DB'),
         entities: [User, Artist, Album, Track, Favorites],
         synchronize: true,
         logging: true
