@@ -1,7 +1,7 @@
 import { Artist } from 'src/artist/entities/artist.entity';
 import { Album } from 'src/album/entities/album.entity';
 import { Track } from 'src/track/entities/track.entity';
-import { Entity, JoinTable, ManyToMany } from 'typeorm';
+import { Entity, JoinTable, ManyToMany, PrimaryGeneratedColumn } from 'typeorm';
 
 export interface IFavoritesResponse {
   artists: Artist[];
@@ -11,6 +11,8 @@ export interface IFavoritesResponse {
 
 @Entity()
 export class Favorites {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
 
   @ManyToMany(() => Artist)
   @JoinTable()

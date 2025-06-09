@@ -12,7 +12,7 @@ import { TrackService } from './track.service';
 import { UpdateTrackDto } from './dto/update-track-info.dto';
 import { CreateTrackDto } from './dto/create-track.dto';
 
-@Controller('track')
+@Controller('tracks')
 export class TrackController {
   constructor(private readonly trackService: TrackService) {}
 

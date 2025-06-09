@@ -1,4 +1,4 @@
-import { Favorites } from './entities/favorites.entity';
+import { Favorites, IFavoritesResponse } from './entities/favorites.entity';
 import { Track } from 'src/track/entities/track.entity';
 import { Artist } from 'src/artist/entities/artist.entity';
 import { Album } from 'src/album/entities/album.entity';
@@ -41,7 +41,7 @@ export class FavoritesService {
     @Inject(forwardRef(() => AlbumService))
     private readonly albumService: AlbumService
   ) {}
-  private favorites: Favorites = {
+  private favorites: IFavoritesResponse = {
     tracks: [],
     albums: [],
     artists: [],

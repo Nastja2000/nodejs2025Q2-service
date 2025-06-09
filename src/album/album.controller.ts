@@ -12,7 +12,7 @@ import { AlbumService } from './album.service';
 import { CreateAlbumDto } from './dto/create-album.dto';
 import { UpdateAlbumDto } from './dto/update-album-info.dto';
 
-@Controller('album')
+@Controller('albums')
 export class AlbumController {
   constructor(private readonly albumService: AlbumService) {}
 
