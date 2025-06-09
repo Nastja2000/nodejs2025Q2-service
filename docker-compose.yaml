@@ -1,46 +1,50 @@
-version: '3.9'
+version: '3.8'
 
 services:
-  app:
-    build: .
-    container_name: app
-    ports:
-      - '4000:4000'
+  db:
+    image: postgres:15
     restart: always
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USERNAME: postgres
-      DB_PASSWORD: postgres
-      DB_DATABASE: home_library
-      PORT: 4000
-    depends_on:
-      - postgres
-    networks:
-      - homeLibrary-net
-    volumes:
-      - ./src:/app/src
-    command: npm run start:prod
-
-  postgres:
-    image: postgres:13-alpine
-    container_name: postgres
-    restart: always
+    container_name: postgres_db
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: home_library
     volumes:
-      - pgdata:/var/lib/postgresql/data
-      - ./postgres/logs:/var/log/postgresql
-    ports:
-      - '5432:5432'
+      - db_data:/var/lib/postgresql/data
+      - db_logs:/var/log/postgresql
     networks:
-      - library-net
+      - backend
 
-networks:
-  library-net:
-    driver: bridge
+  app:
+    build: .
+    restart: always
+    container_name: home_library_app
+    depends_on:
+      - db
+    environment:
+      DATABASE_HOST: db
+      DATABASE_PORT: 5432
+      DATABASE_USER: postgres
+      DATABASE_PASSWORD: postgres
+      DATABASE_NAME: home_library
+      PORT: 4000
+    ports:
+      - "4000:4000"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    command: >
+      sh -c "
+        npm run migration:run &&
+        npm run start:prod
+      "
+    networks:
+      - backend
 
 volumes:
-  pgdata:
+  db_data:
+  db_logs:
+
+networks:
+  backend:
+    driver: bridge

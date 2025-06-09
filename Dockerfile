@@ -1,21 +1,23 @@
-# Stage 1: build
-FROM node:22-alpine AS builder
+FROM node:20-alpine as base
+
 WORKDIR /app
+
 COPY package*.json ./
 RUN npm install
+
 COPY . .
-RUN npm run build
 
-# Stage 2: production
-FROM node:22-alpine
+RUN mkdir -p migrations
+
+RUN npx nest build
+
+FROM node:20-alpine
+
 WORKDIR /app
 
-COPY package*.json ./
-RUN npm install
+COPY --from=base /app/dist ./dist
+COPY --from=base /app/node_modules ./node_modules
+COPY --from=base /app/package*.json ./
+COPY --from=base /app/migrations ./migrations
 
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/package*.json ./
-
-EXPOSE 4000
-CMD ["npm", "run" "start:prod"]
+CMD ["node", "dist/main.js"]
